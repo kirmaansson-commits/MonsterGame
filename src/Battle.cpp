@@ -1,6 +1,8 @@
 #include "Battle.h"
+#include "Item.h"
 #include <iostream>
 #include <cstdlib>
+#include <limits>
 
 Battle::Battle(std::vector<Monster>& playerTeam, Monster& enemyMonster)
     : playerTeam(playerTeam), enemyMonster(enemyMonster) {}
@@ -9,40 +11,86 @@ bool Battle::playerGoesFirst() {
     return (rand() % 2) == 0;
 }
 
+void Battle::playerTurn(Monster& current) {
+    std::cout << "\n--- " << current.getName() << "'s turn ---" << std::endl;
+
+    if (!current.processStatuses()) return; // skipped turn
+    if (!current.isAlive()) return;         // died from poison etc.
+
+    // Show options
+    std::cout << "[1] Attack" << std::endl;
+    if (current.getItemCount() > 0) {
+        std::cout << "[2] Use item" << std::endl;
+    }
+    std::cout << "Choice: ";
+
+    int choice;
+    std::cin >> choice;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    if (choice == 2 && current.getItemCount() > 0) {
+        std::cout << "Select item:" << std::endl;
+        for (int i = 0; i < current.getItemCount(); i++) {
+            std::cout << "  [" << i+1 << "] " << current.getItems()[i]->getName() << std::endl;
+        }
+        std::cout << "Choice: ";
+        int itemChoice;
+        std::cin >> itemChoice;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        itemChoice--;
+
+        Item* item = current.takeItem(itemChoice);
+        if (item) {
+            item->use(enemyMonster);
+            delete item; // consumed
+        } else {
+            std::cout << "Invalid item." << std::endl;
+        }
+    } else {
+        // Regular attack
+        enemyMonster.takeDamage(current.getStrength());
+        std::cout << current.getName() << " attacks " << enemyMonster.getName()
+                  << " for " << current.getStrength() << " damage! ["
+                  << enemyMonster.getName() << " HP: " << enemyMonster.getHp()
+                  << "]" << std::endl;
+    }
+}
+
+void Battle::enemyTurn(Monster& current) {
+    std::cout << "\n--- " << enemyMonster.getName() << "'s turn ---" << std::endl;
+
+    if (!enemyMonster.processStatuses()) return;
+    if (!enemyMonster.isAlive()) return;
+
+    current.takeDamage(enemyMonster.getStrength());
+    std::cout << enemyMonster.getName() << " attacks " << current.getName()
+              << " for " << enemyMonster.getStrength() << " damage! ["
+              << current.getName() << " HP: " << current.getHp() << "]" << std::endl;
+}
+
 bool Battle::start() {
     std::cout << "\n=== BATTLE BEGINS ===" << std::endl;
     std::cout << "Enemy: ";
     enemyMonster.displayStats();
 
-    // Loop through all player monsters
     for (size_t i = 0; i < playerTeam.size(); ) {
         Monster& current = playerTeam[i];
 
-        std::cout << "\n--- " << current.getName() << " enters the battle! ---" << std::endl;
+        std::cout << "\n*** " << current.getName() << " enters the battle! ***" << std::endl;
+        current.displayStats();
 
-        bool playerTurn = playerGoesFirst();
-        if (playerTurn)
-            std::cout << current.getName() << " goes first!" << std::endl;
-        else
-            std::cout << enemyMonster.getName() << " goes first!" << std::endl;
+        bool playerFirst = playerGoesFirst();
+        std::cout << (playerFirst ? current.getName() : enemyMonster.getName())
+                  << " goes first!" << std::endl;
 
         while (current.isAlive() && enemyMonster.isAlive()) {
-            if (playerTurn) {
-                enemyMonster.takeDamage(current.getStrength());
-                std::cout << current.getName() << " attacks "
-                          << enemyMonster.getName() << " for "
-                          << current.getStrength() << " damage! ";
-                std::cout << "[" << enemyMonster.getName()
-                          << " HP: " << enemyMonster.getHp() << "]" << std::endl;
+            if (playerFirst) {
+                playerTurn(current);
+                if (enemyMonster.isAlive()) enemyTurn(current);
             } else {
-                current.takeDamage(enemyMonster.getStrength());
-                std::cout << enemyMonster.getName() << " attacks "
-                          << current.getName() << " for "
-                          << enemyMonster.getStrength() << " damage! ";
-                std::cout << "[" << current.getName()
-                          << " HP: " << current.getHp() << "]" << std::endl;
+                enemyTurn(current);
+                if (current.isAlive()) playerTurn(current);
             }
-            playerTurn = !playerTurn;
         }
 
         if (!enemyMonster.isAlive()) {
@@ -51,7 +99,6 @@ bool Battle::start() {
             return true;
         }
 
-        // Current monster died – remove it and send in the next one
         std::cout << current.getName() << " was defeated!" << std::endl;
         playerTeam.erase(playerTeam.begin() + i);
     }
