@@ -124,29 +124,27 @@ void Game::selectAndBattle() {
     }
 }
 
-
 void Game::handleDefeatedEnemy(Monster& enemy) {
     std::cout << "\nYou defeated " << enemy.getName() << "!" << std::endl;
 
+    // Find the full HP version from available monsters
+    Monster fresh = enemy;
+    for (const auto& m : availableMonsters) {
+        if (m.getName() == enemy.getName()) {
+            fresh = m; // fresh copy with full HP
+            break;
+        }
+    }
+
     if (player->getMonsterCount() < 4) {
-        std::cout << "Add " << enemy.getName() << " to your team? [1] Yes  [2] No: ";
+        std::cout << "Add " << fresh.getName() << " to your team? [1] Yes  [2] No: ";
         int choice;
         std::cin >> choice;
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
         if (choice == 1) {
-            // Reset enemy hp before adding
-            Monster fresh = Monster(enemy.getName(), 
-                availableMonsters[0].getMaxHp(), enemy.getStrength());
-            // Find correct maxHp from availableMonsters
-            for (auto& m : availableMonsters) {
-                if (m.getName() == enemy.getName()) {
-                    fresh = m;
-                    break;
-                }
-            }
             player->addMonster(fresh);
-            std::cout << enemy.getName() << " joined your team!" << std::endl;
+            std::cout << fresh.getName() << " joined your team!" << std::endl;
         }
     } else {
         std::cout << "Your team is full (4/4)! Replace a monster?" << std::endl;
@@ -162,19 +160,12 @@ void Game::handleDefeatedEnemy(Monster& enemy) {
             std::cin >> idx;
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             idx--;
-
-            Monster fresh = enemy;
-            for (auto& m : availableMonsters) {
-                if (m.getName() == enemy.getName()) {
-                    fresh = m;
-                    break;
-                }
-            }
             player->replaceMonster(idx, fresh);
             std::cout << "Monster replaced!" << std::endl;
         }
     }
 }
+
 
 void Game::displayAvailableMonsters() const {
     for (int i = 0; i < (int)availableMonsters.size(); i++) {
