@@ -4,12 +4,12 @@
 
 class Battle {
 private:
-    Monster& playerMonster;
+    std::vector<Monster>& playerTeam;
     Monster& enemyMonster;
 
     bool playerGoesFirst();
 
 public:
-    Battle(Monster& playerMonster, Monster& enemyMonster);
-    void start();
+    Battle(std::vector<Monster>& playerTeam, Monster& enemyMonster);
+    bool start(); // returns true if player won
 };

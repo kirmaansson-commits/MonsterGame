@@ -98,23 +98,8 @@ void Game::startAdventure() {
 }
 
 void Game::selectAndBattle() {
-    // Select player monster
-    std::cout << "\nSelect your monster:" << std::endl;
-    player->displayMonsters();
-    std::cout << "Choice: ";
-
-    int playerChoice;
-    std::cin >> playerChoice;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    playerChoice--;
-
-    if (playerChoice < 0 || playerChoice >= player->getMonsterCount()) {
-        std::cout << "Invalid choice." << std::endl;
-        return;
-    }
-
     // Select enemy monster
-    std::cout << "\nSelect an enemy Monster to fight:" << std::endl;
+    std::cout << "\nSelect an enemy to fight:" << std::endl;
     displayAvailableMonsters();
     std::cout << "Choice: ";
 
@@ -130,21 +115,15 @@ void Game::selectAndBattle() {
 
     // Create the enemy for this battle
     Monster enemy = availableMonsters[enemyChoice];
-    Monster& playerMonster = player->getMonsters()[playerChoice];
 
-    Battle battle(playerMonster, enemy);
-    battle.start();
+    Battle battle(player->getMonsters(), enemy);
+    bool won = battle.start();
 
-    // Handle results
-    if (!playerMonster.isAlive()) {
-        std::cout << playerMonster.getName() << " was defeated and removed from your team." << std::endl;
-        player->getMonsters().erase(player->getMonsters().begin() + playerChoice);
-    }
-
-    if (enemy.isAlive() == false) {
+    if (won) {
         handleDefeatedEnemy(enemy);
     }
 }
+
 
 void Game::handleDefeatedEnemy(Monster& enemy) {
     std::cout << "\nYou defeated " << enemy.getName() << "!" << std::endl;
