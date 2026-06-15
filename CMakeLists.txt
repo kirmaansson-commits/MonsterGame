@@ -12,4 +12,5 @@ add_executable(MonsterGame ${SOURCES})
 
 target_include_directories(MonsterGame PUBLIC include)
 
-target_link_libraries(MonsterGame Qt5::Core Qt5::Sql sqlite3)
+target_link_libraries(MonsterGame Qt5::Core Qt5::Sql)
+
