@@ -1,0 +1,113 @@
+commit 1fd2a1307e79b50a26d8919f644d8764bd6839cf
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Mon Jun 15 07:21:52 2026 +0200
+
+    Integrate Database: save/load characters, persistent statistics
+
+commit 7c3b0e4e0f720f0cbb96aed1d2c1c1a83ff04614
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Mon Jun 15 07:21:37 2026 +0200
+
+    Fix CMakeLists: remove direct sqlite3 link, use Qt5::Sql driver instead
+
+commit 5cb4c1248294eded06be91de6d93f2c7908d9ce4
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 23:53:21 2026 +0200
+
+    Add Database class with SQLite persistence and statistics tracking
+
+commit ed6775a1b079fe4e84ceb0462cfc862b4357b492
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 22:11:56 2026 +0200
+
+    Update CMakeLists to link SQLite3 and Qt5 Sql
+
+commit 0cf70b7d68d7c25a6fe3cf5fabf37691aea9e67e
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 21:32:32 2026 +0200
+
+    Add cave system, item rewards and updated adventure menu
+
+commit 5a7904c1d72acb6c31b4f31982fbba7536bd5dde
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 19:41:45 2026 +0200
+
+    Add Cave class with enemies and reward item
+
+commit 82186038af31ed1a889489790a9536143f063041
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 18:56:32 2026 +0200
+
+    Update Battle to support items, statuses and turn-based effects
+
+commit c8f4fc35aeb26409b075d75cc767a2a02dcb2447
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 18:32:08 2026 +0200
+
+    Extend Monster with statuses, items and deep copy support
+
+commit 902adcc6af32afb71c78f66774d9033b4c9999ea
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 17:55:00 2026 +0200
+
+    Add Item class with damage and status effects
+
+commit e20d50dac063e5fe84c2afca15ec7704bc92582e
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 17:09:36 2026 +0200
+
+    Add Status class with Poisoned, Frozen, Paralyzed, Stunned and Cursed
+
+commit ff229af5aed8fc0fe1e3d36fd1881f6c1c11054a
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 15:26:51 2026 +0200
+
+    Fix: reset monster HP to full when adding to team
+
+commit b2147f28d308d033dfce33d400f9e9d51280b33c
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 15:16:17 2026 +0200
+
+    Change battle system: full team fights one enemy
+
+commit e8e3f4d0640428c98c37bdd5d23373247726ed24
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 14:34:33 2026 +0200
+
+    Add Game class with main menu, loop and battle selection
+
+commit 313ee6766a06973aefc0172a7c69f572ec927724
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 13:39:07 2026 +0200
+
+    Add Battle class, turn-based combat system
+
+commit fba910de74968c367fc1e2621b37059f0cb3be95
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 12:54:15 2026 +0200
+
+    Add Character class, with monster management
+
+commit ccd10f402fae2a2db3a5f0fad335c8099f41eb9a
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 12:13:29 2026 +0200
+
+    Add Monster class with stats and combat methods
+
+commit c7ac7f1a9f53b40f9dda365e5f4cb052658d379b
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 12:06:51 2026 +0200
+
+    Add CMakeLists.txt
+
+commit 8c6785eeb79cd7fb76e7e14e1847f544786288c2
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 12:05:11 2026 +0200
+
+    Initial setup - folder structure
+
+commit 2c80ad6ea5b171d94dfb0e0d580922dc5aa64a53
+Author: kirmaansson-commits <kirmaansson@gmail.com>
+Date:   Sun Jun 14 11:33:14 2026 +0200
+
+    Initial commit
