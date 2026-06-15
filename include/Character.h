@@ -10,14 +10,13 @@ private:
     static const int MAX_MONSTERS = 4;
 
 public:
-    Character(std::string name);
+    Character(std::string name, bool withStarters = true);
 
     std::string getName() const;
     std::vector<Monster>& getMonsters();
     int getMonsterCount() const;
     bool hasMonsters() const;
 
-    // Monster management
     bool addMonster(const Monster& monster);
     bool replaceMonster(int index, const Monster& monster);
     void displayMonsters() const;

@@ -5,9 +5,12 @@
 #include <ctime>
 #include <algorithm>
 
-Game::Game() : player(nullptr) {
+Game::Game() : player(nullptr), currentCharacterId(-1) {
     srand(time(0));
     initMonsters();
+    if (!database.open()) {
+        std::cerr << "Warning: Database could not be opened. Stats will not be saved." << std::endl;
+    }
 }
 
 Game::~Game() {
@@ -37,7 +40,8 @@ void Game::mainMenu() {
     while (true) {
         std::cout << "\n=== MAIN MENU ===" << std::endl;
         std::cout << "[1] New Character" << std::endl;
-        std::cout << "[2] Quit" << std::endl;
+        std::cout << "[2] Load Character" << std::endl;
+        std::cout << "[3] Quit" << std::endl;
         std::cout << "Choice: ";
 
         int choice;
@@ -45,23 +49,77 @@ void Game::mainMenu() {
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
         if (choice == 1) {
-            delete player;
-            player = nullptr;
-
-            std::string name;
-            std::cout << "Enter character name: ";
-            std::getline(std::cin, name);
-
-            player = new Character(name);
-            std::cout << "\nWelcome, " << name << "! You start with 2 Hobbits." << std::endl;
-            startAdventure();
-
+            newCharacter();
         } else if (choice == 2) {
+            loadCharacterMenu();
+        } else if (choice == 3) {
             std::cout << "Goodbye!" << std::endl;
             break;
         } else {
             std::cout << "Invalid choice." << std::endl;
         }
+    }
+}
+
+void Game::newCharacter() {
+    delete player;
+    player = nullptr;
+
+    std::string name;
+    std::cout << "Enter character name: ";
+    std::getline(std::cin, name);
+
+    player = new Character(name);
+    currentCharacterId = database.saveCharacter(*player);
+    std::cout << "\nWelcome, " << name << "! You start with 2 Hobbits." << std::endl;
+    startAdventure();
+}
+
+void Game::loadCharacterMenu() {
+    auto names = database.listCharacterNames();
+    if (names.empty()) {
+        std::cout << "No saved characters found." << std::endl;
+        return;
+    }
+
+    std::cout << "\n=== SAVED CHARACTERS ===" << std::endl;
+    for (size_t i = 0; i < names.size(); i++) {
+        std::cout << "[" << i+1 << "] " << names[i] << std::endl;
+    }
+    std::cout << "[0] Back" << std::endl;
+    std::cout << "Choice: ";
+
+    int choice;
+    std::cin >> choice;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    if (choice == 0) return;
+    choice--;
+
+    if (choice < 0 || choice >= (int)names.size()) {
+        std::cout << "Invalid choice." << std::endl;
+        return;
+    }
+
+    delete player;
+    player = database.loadCharacter(names[choice]);
+    if (!player) {
+        std::cout << "Failed to load character." << std::endl;
+        return;
+    }
+
+    // Get character id for stats
+    auto idList = database.listCharacterNames();
+    currentCharacterId = database.saveCharacter(*player); // re-save returns id
+
+    std::cout << "\nWelcome back, " << player->getName() << "!" << std::endl;
+    database.displayStatistics(currentCharacterId);
+    startAdventure();
+}
+
+void Game::saveProgress() {
+    if (player && currentCharacterId >= 0) {
+        currentCharacterId = database.saveCharacter(*player);
+        std::cout << "Progress saved." << std::endl;
     }
 }
 
@@ -72,7 +130,8 @@ void Game::startAdventure() {
 
         std::cout << "\n[1] Battle a single enemy" << std::endl;
         std::cout << "[2] Explore a cave" << std::endl;
-        std::cout << "[3] Return to main menu" << std::endl;
+        std::cout << "[3] View statistics" << std::endl;
+        std::cout << "[4] Save and return to main menu" << std::endl;
         std::cout << "Choice: ";
 
         int choice;
@@ -85,13 +144,18 @@ void Game::startAdventure() {
                 break;
             }
             selectAndBattle();
+            saveProgress();
         } else if (choice == 2) {
             if (!player->hasMonsters()) {
                 std::cout << "All your monsters have been defeated!" << std::endl;
                 break;
             }
             enterCave();
+            saveProgress();
         } else if (choice == 3) {
+            database.displayStatistics(currentCharacterId);
+        } else if (choice == 4) {
+            saveProgress();
             break;
         } else {
             std::cout << "Invalid choice." << std::endl;
@@ -99,6 +163,7 @@ void Game::startAdventure() {
 
         if (!player->hasMonsters()) {
             std::cout << "\nAll your monsters have been defeated! Returning to main menu." << std::endl;
+            saveProgress();
             break;
         }
     }
@@ -120,12 +185,10 @@ void Game::selectAndBattle() {
     }
 
     Monster enemy = availableMonsters[enemyChoice];
-    Battle battle(player->getMonsters(), enemy);
+    Battle battle(player->getMonsters(), enemy, &database, currentCharacterId);
     bool won = battle.start();
 
-    if (won) {
-        handleDefeatedEnemy(enemy);
-    }
+    if (won) handleDefeatedEnemy(enemy);
 }
 
 void Game::enterCave() {
@@ -142,7 +205,6 @@ void Game::enterCave() {
     int choice;
     std::cin >> choice;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
     if (choice == 0) return;
     choice--;
 
@@ -154,12 +216,11 @@ void Game::enterCave() {
     Cave& cave = caves[choice];
     cave.displayInfo();
 
-    // Fight each enemy in the cave one by one
     for (auto& enemy : cave.getEnemies()) {
         if (!player->hasMonsters()) break;
 
         std::cout << "\n>>> A " << enemy.getName() << " appears! <<<" << std::endl;
-        Battle battle(player->getMonsters(), enemy);
+        Battle battle(player->getMonsters(), enemy, &database, currentCharacterId);
         bool won = battle.start();
 
         if (!won) {
@@ -179,10 +240,7 @@ void Game::enterCave() {
 }
 
 void Game::giveItemToMonster(Item* item) {
-    if (!player->hasMonsters()) {
-        delete item;
-        return;
-    }
+    if (!player->hasMonsters()) { delete item; return; }
 
     std::cout << "\nGive " << item->getName() << " to which monster?" << std::endl;
     player->displayMonsters();
@@ -192,11 +250,7 @@ void Game::giveItemToMonster(Item* item) {
     int choice;
     std::cin >> choice;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    if (choice == 0) {
-        delete item;
-        return;
-    }
+    if (choice == 0) { delete item; return; }
     choice--;
 
     if (choice < 0 || choice >= player->getMonsterCount()) {
@@ -207,7 +261,7 @@ void Game::giveItemToMonster(Item* item) {
 
     Monster& target = player->getMonsters()[choice];
     if (!target.addItem(item)) {
-        std::cout << target.getName() << "'s inventory is full (3/3). Item discarded." << std::endl;
+        std::cout << target.getName() << "'s inventory is full. Item discarded." << std::endl;
         delete item;
     } else {
         std::cout << item->getName() << " given to " << target.getName() << "!" << std::endl;
@@ -219,10 +273,7 @@ void Game::handleDefeatedEnemy(Monster& enemy) {
 
     Monster fresh = enemy;
     for (const auto& m : availableMonsters) {
-        if (m.getName() == enemy.getName()) {
-            fresh = m;
-            break;
-        }
+        if (m.getName() == enemy.getName()) { fresh = m; break; }
     }
 
     if (player->getMonsterCount() < 4) {
@@ -230,7 +281,6 @@ void Game::handleDefeatedEnemy(Monster& enemy) {
         int choice;
         std::cin >> choice;
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
         if (choice == 1) {
             player->addMonster(fresh);
             std::cout << fresh.getName() << " joined your team!" << std::endl;
@@ -240,7 +290,6 @@ void Game::handleDefeatedEnemy(Monster& enemy) {
         int choice;
         std::cin >> choice;
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
         if (choice == 1) {
             player->displayMonsters();
             std::cout << "Replace which monster? ";
@@ -271,16 +320,11 @@ int Game::calculatePlayerPower() const {
 }
 
 Monster Game::makeMonsterByPower(int power) const {
-    // Pick the monster from availableMonsters closest to the target power
     Monster best = availableMonsters[0];
     int bestDiff = std::abs((best.getMaxHp() + best.getStrength() * 2) - power);
-
     for (const auto& m : availableMonsters) {
         int diff = std::abs((m.getMaxHp() + m.getStrength() * 2) - power);
-        if (diff < bestDiff) {
-            bestDiff = diff;
-            best = m;
-        }
+        if (diff < bestDiff) { bestDiff = diff; best = m; }
     }
     return best;
 }
@@ -293,22 +337,16 @@ Item* Game::randomReward() const {
 void Game::generateCaves() {
     caves.clear();
     int basePower = calculatePlayerPower();
-
-    std::vector<std::string> caveNames = {
-        "Goblin Hollow", "Misty Cavern", "Dragon's Lair"
-    };
-
-    std::vector<int> multipliers = { 100, 130, 170 }; // % of base power
+    std::vector<std::string> caveNames = { "Goblin Hollow", "Misty Cavern", "Dragon's Lair" };
+    std::vector<int> multipliers = { 100, 130, 170 };
 
     for (size_t i = 0; i < caveNames.size(); i++) {
         int targetPower = (basePower * multipliers[i]) / 100;
         std::vector<Monster> enemies;
-        int enemyCount = 2 + (i); // 2, 3, 4 enemies per cave
-
+        int enemyCount = 2 + i;
         for (int j = 0; j < enemyCount; j++) {
             enemies.push_back(makeMonsterByPower(targetPower));
         }
-
         caves.emplace_back(caveNames[i], std::move(enemies), randomReward());
     }
 }

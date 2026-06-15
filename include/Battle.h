@@ -2,17 +2,21 @@
 #include "Monster.h"
 #include <vector>
 
+class Database;
+
 class Battle {
 private:
     std::vector<Monster>& playerTeam;
     Monster& enemyMonster;
+    Database* db;
+    int characterId;
 
     bool playerGoesFirst();
-    // Returns true if turn played out, false if monster died from status
     void playerTurn(Monster& current);
     void enemyTurn(Monster& current);
 
 public:
-    Battle(std::vector<Monster>& playerTeam, Monster& enemyMonster);
-    bool start(); // returns true if player won
+    Battle(std::vector<Monster>& playerTeam, Monster& enemyMonster,
+           Database* db = nullptr, int characterId = -1);
+    bool start();
 };

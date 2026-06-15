@@ -30,5 +30,5 @@ public:
 
     // Use the item on a target monster
     // Returns true if the item dealt damage
-    void use(Monster& target);
+    bool use(Monster& target);
 };

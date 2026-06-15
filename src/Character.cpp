@@ -1,10 +1,11 @@
 #include "Character.h"
 #include <iostream>
 
-Character::Character(std::string name) : name(name) {
-    // Starter med to Hobbits
-    monsters.push_back(Monster("Hobbit", 4, 1));
-    monsters.push_back(Monster("Hobbit", 4, 1));
+Character::Character(std::string name, bool withStarters) : name(name) {
+    if (withStarters) {
+        monsters.push_back(Monster("Hobbit", 4, 1));
+        monsters.push_back(Monster("Hobbit", 4, 1));
+    }
 }
 
 std::string Character::getName() const { return name; }
@@ -29,7 +30,7 @@ bool Character::replaceMonster(int index, const Monster& monster) {
 }
 
 void Character::displayMonsters() const {
-    std::cout << "\n" << name << "'s monstre:" << std::endl;
+    std::cout << "\n" << name << "'s monsters:" << std::endl;
     for (int i = 0; i < (int)monsters.size(); i++) {
         std::cout << "  [" << i+1 << "] ";
         monsters[i].displayStats();

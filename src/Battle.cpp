@@ -1,27 +1,25 @@
 #include "Battle.h"
 #include "Item.h"
+#include "Database.h"
 #include <iostream>
 #include <cstdlib>
 #include <limits>
 
-Battle::Battle(std::vector<Monster>& playerTeam, Monster& enemyMonster)
-    : playerTeam(playerTeam), enemyMonster(enemyMonster) {}
+Battle::Battle(std::vector<Monster>& playerTeam, Monster& enemyMonster,
+               Database* db, int characterId)
+    : playerTeam(playerTeam), enemyMonster(enemyMonster),
+      db(db), characterId(characterId) {}
 
-bool Battle::playerGoesFirst() {
-    return (rand() % 2) == 0;
-}
+bool Battle::playerGoesFirst() { return (rand() % 2) == 0; }
 
 void Battle::playerTurn(Monster& current) {
     std::cout << "\n--- " << current.getName() << "'s turn ---" << std::endl;
 
-    if (!current.processStatuses()) return; // skipped turn
-    if (!current.isAlive()) return;         // died from poison etc.
+    if (!current.processStatuses()) return;
+    if (!current.isAlive()) return;
 
-    // Show options
     std::cout << "[1] Attack" << std::endl;
-    if (current.getItemCount() > 0) {
-        std::cout << "[2] Use item" << std::endl;
-    }
+    if (current.getItemCount() > 0) std::cout << "[2] Use item" << std::endl;
     std::cout << "Choice: ";
 
     int choice;
@@ -41,13 +39,16 @@ void Battle::playerTurn(Monster& current) {
 
         Item* item = current.takeItem(itemChoice);
         if (item) {
-            item->use(enemyMonster);
-            delete item; // consumed
+            std::string itemName = item->getName();
+            bool killed = item->use(enemyMonster);
+            if (db && characterId >= 0) {
+                db->recordItemUsed(characterId, itemName, killed);
+            }
+            delete item;
         } else {
             std::cout << "Invalid item." << std::endl;
         }
     } else {
-        // Regular attack
         enemyMonster.takeDamage(current.getStrength());
         std::cout << current.getName() << " attacks " << enemyMonster.getName()
                   << " for " << current.getStrength() << " damage! ["
@@ -58,7 +59,6 @@ void Battle::playerTurn(Monster& current) {
 
 void Battle::enemyTurn(Monster& current) {
     std::cout << "\n--- " << enemyMonster.getName() << "'s turn ---" << std::endl;
-
     if (!enemyMonster.processStatuses()) return;
     if (!enemyMonster.isAlive()) return;
 
@@ -75,7 +75,6 @@ bool Battle::start() {
 
     for (size_t i = 0; i < playerTeam.size(); ) {
         Monster& current = playerTeam[i];
-
         std::cout << "\n*** " << current.getName() << " enters the battle! ***" << std::endl;
         current.displayStats();
 
@@ -96,6 +95,9 @@ bool Battle::start() {
         if (!enemyMonster.isAlive()) {
             std::cout << "\n=== BATTLE OVER ===" << std::endl;
             std::cout << "You defeated " << enemyMonster.getName() << "!" << std::endl;
+            if (db && characterId >= 0) {
+                db->recordMonsterDefeated(characterId, enemyMonster.getName());
+            }
             return true;
         }
 

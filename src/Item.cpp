@@ -19,7 +19,7 @@ ItemType Item::getType() const { return type; }
 std::string Item::getName() const { return name; }
 int Item::getDamage() const { return damage; }
 
-void Item::use(Monster& target) {
+bool Item::use(Monster& target) {
     std::cout << "Used " << name << " on " << target.getName() << "!" << std::endl;
 
     bool dealtDamage = false;
@@ -72,4 +72,5 @@ void Item::use(Monster& target) {
         }
         default: break;
     }
+    return !target.isAlive();
 }
